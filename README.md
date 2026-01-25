@@ -10,3 +10,12 @@
 
 游戏玩法和数据操作可修改core和database
 
+记得自己创建.env文件，写入如下内容：
+```text
+URL=  # 连接mongodb的地址
+HOST=127.0.0.1  # 给napcat的websocket的地址
+PORT=3434  # 给napcat的websocket的端口
+ADMIN=  # 在群聊中可发送“/开启游戏” “/关闭游戏”的qq号
+```
+
+关于napcat的使用，直接搜官方文档即可
