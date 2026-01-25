@@ -1,0 +1,12 @@
+架构：
+
+src/actions: 指令列表
+src/adapters：将提供接受群聊/私聊消息的函数注册，提供发送消息的接口（目前只实现了napcat wss）
+src/core: 游戏核心
+src/database: mongoodb数据库操作的接口
+src/utils: 其他工具
+
+要添加指令可在actions中添加，记得在src/actions/index.ts中导入一下
+
+游戏玩法和数据操作可修改core和database
+
