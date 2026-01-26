@@ -14,13 +14,17 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "^25.0.9",
     "@types/ws": "^8.18.1",
+    "install": "^0.13.0",
+    "npm": "^11.8.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
+    "lodash-es": "^4.17.23",
     "mongodb": "^7.0.0",
     "nedb": "^1.8.0",
     "ws": "^8.19.0"

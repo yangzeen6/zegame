@@ -70,21 +70,22 @@ export class ZeSessionNapcat implements ZeSessionBase {
       if (typeof info === 'string')
         message = `${message}\n${info}`;
       else {
-        for (let each in info) {
-          message = `${message}\n${info}`;
+        for (let each of info) {
+          message = `${message}\n${each}`;
         }
       }
     }
     let payload: any = {
-        action: 'send_group_msg',
         params: {
             message: message
         }
     }
     if (this.event.type == 'group') {
-        payload.params.group_id = this.event.group_id;
+      payload.action = 'send_group_msg'
+      payload.params.group_id = parseInt(this.event.group_id);
     } else {
-        payload.params.user_id = this.event.sender_id;
+      payload.action = 'send_private_msg'
+      payload.params.user_id = parseInt(this.event.sender_id);
     }
     return new Promise((resolve)=>{
         console.debug("SEND: ", JSON.stringify(payload))

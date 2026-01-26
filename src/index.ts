@@ -1,4 +1,4 @@
-import { createWebSocketServer } from "@/adapters/napcat_wss/index.js";
+import { createWebSocketServer } from "@/adapters/napcat_ws/index.js";
 import { Core } from "@/core/index.js";
 import { connectDatabase } from "@/database/index.js";
 import { ActionManager } from "@/actions/index.js";
@@ -11,7 +11,8 @@ const server = createWebSocketServer({host:process.env.HOST, port:+(process.env.
 
 // 连接mongodb数据库
 const url = process.env.URL as string;
-const db = await connectDatabase(url);
+const db_name = process.env.DB_NAME as string;
+const db = await connectDatabase(url, db_name);
 
 // 初始化游戏核心
 const core = new Core(db);

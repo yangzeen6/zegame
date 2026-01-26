@@ -1,4 +1,4 @@
-import { createWebSocketServer } from "@/adapters/napcat_wss/index.js";
+import { createWebSocketServer } from "@/adapters/napcat_ws/index.js";
 const server = createWebSocketServer({host:'127.0.0.1',port:3434});
 
 server.register('message', async ({session, raw}) => {

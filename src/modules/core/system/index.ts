@@ -12,7 +12,7 @@ export class SystemService {
     async group_list_check(group_id: string) {
         if (this.group_list == null)
             this.group_list = (await this.Config.get('group_list')) as string[] || []
-        return group_id in this.group_list
+        return this.group_list.includes(group_id)
     }
 
     async group_list_add(group_id: string) {

@@ -3,17 +3,23 @@ import { add_action } from "../index.js";
 import { ZeSessionBase } from "@/adapters/index.js";
 import { Rule } from "../rule/index.js";
 import { User } from "@/core/user/index.js";
+import { Info } from "../info/index.js";
 
 add_action('签到', Rule.is_registered, async (core: Core, session: ZeSessionBase, args: string[]) => {
     const user = await core.User.get_user(session.event.sender_id) as User;
-    await user.update_today("签到");
     const now = new Date();
-    const last = user.data.date?.签到;
+    const last = await user.get('status.签到');
     if (!last || last < now && last.getDate() != now.getDate()) {
-        await session.send(`签到成功！`);
-        return
+        await user.set("status.签到", now);
+        await user.inc_many({
+            'coins': 10,
+            'exp': 20
+        });
+        await session.send(`签到成功！恭喜获得10枚金币以及20点经验值`, true, Info.信息);
+        await user.level_up(session);
+        return;
     } else {
-        await session.send(`签到失败！你在今天的 ${last.getHours()}:${last.getMinutes()} 已经签到过了`);
-        return
+        await session.send(`签到失败！你今天 ${last.getHours()}:${last.getMinutes()} 的时候已经签到过了`, true, Info.信息);
+        return;
     }
 })

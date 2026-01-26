@@ -4,9 +4,9 @@ import { UserSchema } from "./types.js";
 export class Database {
   private client: MongoClient;
   private db: Db;
-  constructor(client: MongoClient) {
+  constructor(client: MongoClient, db_name: string) {
     this.client = client;
-    this.db = this.client.db('zegame');
+    this.db = this.client.db(db_name);
   }
   getCollection<T extends Document>(name: string): Collection<T> {
     return this.db.collection<T>(name);
@@ -30,10 +30,10 @@ export class ZeDatabase {
   }
 }
 
-export const connectDatabase = async (uri: string) => {
+export const connectDatabase = async (uri: string, db_name: string) => {
   const client = new MongoClient(uri);
   await client.connect();
-  return new ZeDatabase(new Database(client));
+  return new ZeDatabase(new Database(client, db_name));
 }
 
 
@@ -45,17 +45,17 @@ export class UserDatabase {
   async create(user: UserSchema) {
     return await this.collection.insertOne(user);
   }
-  async findById(id: string) {
-    return await this.collection.findOne({ id });
+  async find(
+    id: string, 
+    require: any = { "weapon": 0, "date": 0, "backpack": 0 }
+  ) {
+    return await this.collection.findOne({ id }, require);
   }
-  async update(id: string, user: Partial<UserSchema>) {
-    return await this.collection.updateOne({ id }, { $set: user });
-  }
-  async update_setter(id: string, setter: {}) {
+  async update_set(id: string, setter: any) {
     return await this.collection.updateOne({ id }, { $set: setter });
   }
-  async update_inc(id: string, user: Partial<Pick<UserSchema, 'level' | 'experience' | 'coins'>>) {
-    return await this.collection.updateOne({ id }, { $inc: user });
+  async update_inc(id: string, setter: any) {
+    return await this.collection.updateOne({ id }, { $inc: setter });
   }
 }
 

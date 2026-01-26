@@ -24,6 +24,7 @@ export class ActionManager {
     async init() {
         await import('./user/注册.js');
         await import('./user/签到.js');
+        await import('./user/信息.js');
     }
     async match(session: ZeSessionBase) {
         if (session.event.group_id && session.event.sender_id == this.admin && session.event.content.startsWith('/')) {
