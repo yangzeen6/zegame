@@ -2,8 +2,9 @@ import { ZeDatabase } from "@/database/index.js";
 
 export class SystemService {
     private db: ZeDatabase;
-    private Config;
     private group_list: string[] | null = null;
+    Config;
+
     constructor(db: ZeDatabase) {
         this.db = db;
         this.Config = db.Config;

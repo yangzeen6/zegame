@@ -64,8 +64,8 @@ export class ConfigDatabase {
   constructor(connection: Collection) {
     this.collection = connection;
   }
-  async get(key: string): Promise<any> {
-    return (await this.collection.findOne({ key }))?.value;
+  async get(key: string, default_v: any): Promise<any> {
+    return (await this.collection.findOne({ key }))?.value || default_v;
   }
   async set(key: string, value: any) {
     return await this.collection.updateOne({ key }, { $set: { value } }, { upsert: true });

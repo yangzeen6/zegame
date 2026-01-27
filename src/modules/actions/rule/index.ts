@@ -1,5 +1,6 @@
-import { is_registered } from "./user.js";
+import { is_registered, is_wake } from "./user.js";
 
 export const Rule = {
     is_registered,
+    is_wake
 }

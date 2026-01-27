@@ -24,7 +24,7 @@ export class UserService {
         return await this.get_user(id);
     }
 
-    async get_user(id: string): Promise<User | null> {
+    async get_user(id: string, more_items?: string[]): Promise<User | null> {
         const usr = await this.db.User.find(id);
         if (!usr)
             return null;

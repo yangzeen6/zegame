@@ -8,8 +8,8 @@ import { Info } from "../info/index.js";
 add_action('签到', Rule.is_registered, async (core: Core, session: ZeSessionBase, args: string[]) => {
     const user = await core.User.get_user(session.event.sender_id) as User;
     const now = new Date();
-    const last = await user.get('status.签到');
-    if (!last || last < now && last.getDate() != now.getDate()) {
+    const pre = await user.get('status.签到');
+    if (!pre || pre < now && pre.getDate() != now.getDate()) {
         await user.set("status.签到", now);
         await user.inc_many({
             'coins': 10,
@@ -19,7 +19,7 @@ add_action('签到', Rule.is_registered, async (core: Core, session: ZeSessionBa
         await user.level_up(session);
         return;
     } else {
-        await session.send(`签到失败！你今天 ${last.getHours()}:${last.getMinutes()} 的时候已经签到过了`, true, Info.信息);
+        await session.send(`签到失败！您今天 ${pre.getHours()}:${pre.getMinutes()} 的时候已经签到过了`, true, Info.信息);
         return;
     }
 })

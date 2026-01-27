@@ -65,6 +65,8 @@ export class ZeSessionNapcat implements ZeSessionBase {
   }
 
   async send(message: string, reply: boolean = true, info?: string | string[]): Promise<void> {
+    message = message.trim();
+    if (!message) return;
     if (reply) message = `[CQ:reply,id=${this.event.msg_id}] ${message}`
     if (info) {
       if (typeof info === 'string')

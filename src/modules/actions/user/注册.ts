@@ -30,6 +30,6 @@ add_action('注册', null, async (core: Core, session: ZeSessionBase, args: stri
 
     await core.User.create_user(session.event.sender_id, name);
 
-    session.send(`恭喜【${name}】注册成功！`, true, Info.签到);
+    session.send(`恭喜【${name}】注册成功！`, true, Info.菜单);
 
 })
