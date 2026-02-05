@@ -1,28 +1,15 @@
-import { createWebSocketServer } from "@/adapters/napcat_ws/index.js";
-import { Core } from "@/core/index.js";
+import { createWebSocketServer } from "@/adapters/index.js";
 import { connectDatabase } from "@/database/index.js";
-import { ActionManager } from "@/actions/index.js";
+import { launch } from "src/core/core.js";
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 创建websocket服务器，由napcat连接
-const server = createWebSocketServer({host:process.env.HOST, port:+(process.env.PORT||3434)});
-
-// 连接mongodb数据库
 const url = process.env.URL as string;
 const db_name = process.env.DB_NAME as string;
-const db = await connectDatabase(url, db_name);
 
-// 初始化游戏核心
-const core = new Core(db);
+createWebSocketServer({host:process.env.HOST, port:+(process.env.PORT||3434)});
+await connectDatabase(url, db_name);
 
-// 初始化指令列表
-const actionManager = new ActionManager(core, process.env.ADMIN as string);
-await actionManager.init();
 
-// 监听napcat发来的post_type为message的消息
-server.register('message', async ({session, raw}) => {
-    // 匹配指令
-    await actionManager.match(session)
-})
+await launch(process.env.ADMIN as string);

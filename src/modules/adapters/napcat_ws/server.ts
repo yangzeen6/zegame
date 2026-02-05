@@ -3,10 +3,10 @@ import type {
   ZeEvent,
   ZeSessionBase,
   ZeEventHandler,
-} from "@/adapters/types.js";
+} from "../types.js";
 
 type PendingWait = {
-  resolve: (value: ZeEvent | void) => void;
+  resolve: (value: ZeSessionBase | void) => void;
   timer?: NodeJS.Timeout;
 };
 
@@ -30,13 +30,13 @@ class PendingManager {
         this.pendingByUser.set(userId, list);
       }
     
-      resolvePending(userId: string, event: ZeEvent): boolean {
+      resolvePending(userId: string, session: ZeSessionBase): boolean {
         const list = this.pendingByUser.get(userId);
         if (!list || list.length === 0) return false;
         const pending = list.shift();
         if (pending) {
           if (pending.timer) clearTimeout(pending.timer);
-          pending.resolve(event);
+          pending.resolve(session);
           
         }
         if (list && list.length === 0) {
@@ -98,9 +98,9 @@ export class ZeSessionNapcat implements ZeSessionBase {
     });
   }
 
-  async input(timeoutMs?: number): Promise<ZeEvent | void> {
+  async input(timeoutMs?: number): Promise<ZeSessionBase | void> {
     const timeout = timeoutMs;
-    return new Promise<ZeEvent | void>((resolve) => {
+    return new Promise<ZeSessionBase | void>((resolve) => {
       const pending: PendingWait = { resolve };
       if (timeout && timeout > 0) {
         pending.timer = setTimeout(() => {
@@ -120,26 +120,29 @@ export class ZeSessionNapcat implements ZeSessionBase {
 
 
 export class ZeWebSocketServer {
-  private readonly wss: WebSocketServer;
+  private readonly ws: WebSocketServer;
   private readonly handlers = new Map<string, ZeEventHandler>();
   private readonly pending = new PendingManager();
 
   constructor(options: WebSocket.ServerOptions) {
-    this.wss = new WebSocketServer(options);
+    this.ws = new WebSocketServer(options);
     console.log("Server started. ", options)
-    this.bindEvents();
   }
 
   close(): void {
-    this.wss.close();
+    this.ws.close();
   }
 
   register(post_type: string, handler: ZeEventHandler): void {
     this.handlers.set(post_type, handler);
   }
 
+  bind(): void {
+    this.bindEvents();
+  }
+
   private bindEvents(): void {
-    this.wss.on("connection", (ws: WebSocket) => {
+    this.ws.on("connection", (ws: WebSocket) => {
       console.log("Client connected")
       ws.on("message", (data: RawData) => {
         this.handleMessage(ws, data.toString()).catch((err) => {
@@ -183,7 +186,11 @@ export class ZeWebSocketServer {
             msg_id: request.message_id
         };
 
-        const resolved = this.pending.resolvePending(e.sender_id, e);
+        const resolved = this.pending.resolvePending(e.sender_id, new ZeSessionNapcat({
+          ws,
+          event: e,
+          pending: this.pending,
+        }));
         if (resolved) return;
 
     } else {
@@ -215,6 +222,3 @@ export class ZeWebSocketServer {
   }
 }
 
-export function createWebSocketServer(options: WebSocket.ServerOptions): ZeWebSocketServer {
-  return new ZeWebSocketServer(options);
-}

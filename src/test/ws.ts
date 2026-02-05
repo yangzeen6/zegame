@@ -1,4 +1,4 @@
-import { createWebSocketServer } from "@/adapters/napcat_ws/index.js";
+import { createWebSocketServer } from "@/adapters/index.js";
 const server = createWebSocketServer({host:'127.0.0.1',port:3434});
 
 server.register('message', async ({session, raw}) => {
@@ -7,10 +7,10 @@ server.register('message', async ({session, raw}) => {
     if (event.content == 'hello') {
       session.send('请发送: a');
       while (1) {
-        var e = await session.input()
-        if (!e) return;
-        if (e.content != 'a') {
-          session.send(`请发送: a, 你发送的是 ${e.content}`)
+        var s = await session.input()
+        if (!s) return;
+        if (s.event.content != 'a') {
+          session.send(`请发送: a, 你发送的是 ${s.event.content}`)
           continue;
         }
         session.send('测试成功');
