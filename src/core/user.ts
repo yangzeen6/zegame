@@ -36,7 +36,7 @@ export const UserService = {
         
         // 自动监听修改
         const usr_ = createMongoObservable(usr, async (setter) => {
-            await getDatabase().User.update_set(session.event.sender_id, setter);
+            await getDatabase().User.update(session.event.sender_id, setter);
             return;
         })
         const user = new User(usr_, session);

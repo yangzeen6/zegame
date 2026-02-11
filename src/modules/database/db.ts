@@ -6,14 +6,20 @@ import { DataDb } from "./data.js";
 
 
 export class ZeDatabase {
+  private db;
   User: UserDb;
   Config: ConfigDb;
   Data: DataDb;
 
   constructor(db: Db) {
-      this.User = new UserDb(db.collection('users'));
-      this.Config = new ConfigDb(db.collection('config'));
-      this.Data = new DataDb(db);
+    this.db = db;
+    this.User = new UserDb(db.collection('users'));
+    this.Config = new ConfigDb(db.collection('config'));
+    this.Data = new DataDb(db);
+  }
+
+  async load() {
+    await this.Data.load();
   }
 }
 

@@ -13,6 +13,7 @@ const block_list: {
 export async function launch(admin: string) {
     const server = getWebSocketServer();
     const db = getDatabase();
+    await db.load();
 
     await actionManager.load_actions();
 
