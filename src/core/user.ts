@@ -7,7 +7,7 @@ import {set as obj_set, get as obj_get} from "lodash-es";
 const users = new Map<string, User>(); // 暂时不用对象池，估计这个用户量也占不了多大内存，等以后再把Map改成对象池
 
 export const UserService = {
-    async create_user(id: string, name: string): Promise<void> {
+    async createUser(id: string, name: string): Promise<void> {
         await getDatabase().User.create({
             id,
             name,
@@ -22,14 +22,13 @@ export const UserService = {
             equipment: {},
             status: {},
             backpack: {},
-
         });
         return;
     },
 
-    // 在最开始处建立一个对象池，先把所有的数据查询到，这样就不需要再require了
-    async get_user(session: ZeSessionBase): Promise<User> {
-        if (users.has(session.event.sender_id)) return users.get(session.event.sender_id) as User;
+    // 在最开始处建立一个users对象池，先把所有的数据查询到，这样就不需要再require了
+    async getUser(session: ZeSessionBase): Promise<User> {
+        if (users.has(session.event.sender_id)) return users.get(session.event.sender_id)?.refreshSession(session) as User;
 
         const usr = await getDatabase().User.find(session.event.sender_id);
         if (!usr)
@@ -66,8 +65,14 @@ export class User {
         this.s = session;
     }
 
+
+    refreshSession(s: ZeSessionBase) {
+        this.s = s;
+        return this;
+    }
+
     async send(message: string, config?: SendConfig) {
-        await this.s.send(message, config?.reply || true, config?.info)
+        await this.s.send(message.trim(), config?.reply || true, config?.info)
     }
 
     async input(timeoutMS?: number) {
@@ -78,30 +83,42 @@ export class User {
 
     }
 
+    // 增减背包物品，在inc>=0时始终返回true, 在inc<0且数量不足时返回false
+    incItem(item: string, inc: number): boolean {
+        var count = this.d.backpack[item];
+        if (inc>=0) {
+            if (!count) this.d.backpack[item] = inc;
+            else this.d.backpack[item] += inc;
+        } else {
+            if (!count || count + inc < 0) return false;
+            if (count + inc == 0) delete this.d.backpack[item];
+        }
+        return true;
+    }
 
-    recover_hp(v: number): number {
-        const real_v = Math.max(this.d.hp_max - this.d.hp, v);
+    recoverHP(v: number): number {
+        const real_v = Math.min(this.d.hp_max - this.d.hp, v);
         this.d.hp += real_v;
         return real_v;
     }
 
-    recover_sta(v: number): number {
-        const real_v = Math.max(this.d.sta_max - this.d.sta, v);
+    recoverSTA(v: number): number {
+        const real_v = Math.min(this.d.sta_max - this.d.sta, v);
         this.d.sta += real_v;
         return real_v;
     }
 
-    get_status(status: string, default_v?: any) {
+    getStatus(status: string, default_v?: any) {
         return obj_get(this.d, `status.${status}`, default_v);
     }
 
-    set_status(status: string, value: any) {
+    setStatus(status: string, value: any) {
         obj_set(this.d, `status.${status}`, value);
     }
 
-    async level_up() {
+    async levelUP() {
         let n = 0;
-        while (this.d.exp >= this.experience_up()) {
+        while (this.d.exp >= this.expNext()) {
             this.d.level++;
             n++;
         }
@@ -113,7 +130,7 @@ export class User {
     }
 
     // 查询升级所需经验
-    experience_up() {
+    expNext() {
         const L = this.d.level;
         return L * 100;
     }

@@ -1,12 +1,22 @@
 ## 架构：
 
- - src/actions: 指令列表
- - src/adapters：将提供接受群聊/私聊消息的函数注册，提供发送消息的接口（目前只实现了napcat ws）
- - src/core: 游戏核心
- - src/database: mongoodb数据库操作的接口
- - src/utils: 其他工具
+ - src/core/
+   - 一些文件夹：分类存放一些指令
+   - action.ts: 指令匹配
+   - admin.ts: 超级管理的指令
+   - core.ts：游戏启动核心
+   - index.ts: 导出core中的launch函数
+   - info.ts: 一些指令的介绍（其实本来可以用json储存，这里直接硬编码了，以后再改吧）
+   - rule.ts: 指令的拦截规则
+   - types.ts：一些接口的定义
+   - user.ts: 用户操作
+ - src/modules/
+   - adapters：将提供接受群聊/私聊消息的函数注册，提供发送消息的接口（目前只实现了napcat ws）
+   - database: mongoodb数据库操作的接口
+   - utils: 其他工具
+ - src/test: 测试
 
-要添加指令可在actions中添加，记得在src/actions/index.ts中导入一下
+要添加指令可用action.ts的add_action函数添加，新的ts文件记得在src/core/action.ts中导入一下
 
 游戏玩法和数据操作可修改core和database
 

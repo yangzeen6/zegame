@@ -1,6 +1,6 @@
 import { createWebSocketServer } from "@/adapters/index.js";
 import { connectDatabase } from "@/database/index.js";
-import { launch } from "src/core/core.js";
+import { launch } from "src/core/index.js";
 import dotenv from 'dotenv';
 
 dotenv.config();

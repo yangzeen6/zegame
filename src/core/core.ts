@@ -34,7 +34,7 @@ export async function launch(admin: string) {
         
         // 执行action
         block_list[session.event.sender_id] = true;
-        const user = await UserService.get_user(session);
+        const user = await UserService.getUser(session);
         await actionManager.call(act.action, act.args, user);
         await user.update();
         delete block_list[session.event.sender_id];

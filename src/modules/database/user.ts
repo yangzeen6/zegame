@@ -14,8 +14,9 @@ export class UserDb {
     ) {
       return await this.collection.findOne({ id });
     }
-    async update_set(id: string, setter: any) {
-      return await this.collection.updateOne({ id }, { $set: setter });
+    async update_set(id: string, updateDoc: any) {
+      // 这里直接接收完整的 MongoDB 更新文档，例如：{ $set: {...}, $unset: {...} }
+      return await this.collection.updateOne({ id }, updateDoc);
     }
   }
   

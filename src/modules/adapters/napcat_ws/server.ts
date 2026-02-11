@@ -70,7 +70,7 @@ export class ZeSessionNapcat implements ZeSessionBase {
     if (reply) message = `[CQ:reply,id=${this.event.msg_id}] ${message}`
     if (info) {
       if (typeof info === 'string')
-        message = `${message}\n${info}`;
+        message = `${message}\ntip: ${info}`;
       else {
         for (let each of info) {
           message = `${message}\n${each}`;

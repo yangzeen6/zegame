@@ -5,7 +5,7 @@ import { info_rand } from "../info.js";
 add_action('信息', Rule.is_registered, async (user, args) => {
     const msg = `${user.d.name}
 等级：${user.d.level}
-经验：${user.d.exp}/${user.experience_up()}
+经验：${user.d.exp}/${user.expNext()}
 金币：${user.d.coins}
 宝石：${user.d.gems}
 生命值：${user.d.hp}/${user.d.hp_max}

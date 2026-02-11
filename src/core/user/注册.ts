@@ -25,7 +25,7 @@ add_action('注册', null, async (user, args) => {
         return;
     }
 
-    await UserService.create_user(user.id, name);
+    await UserService.createUser(user.id, name);
 
     user.send(`恭喜【${name}】注册成功！`, {info:  Info.菜单});
 

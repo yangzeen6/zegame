@@ -16,10 +16,15 @@ export function add_action(action_name: string, rule: ZeRule | ZeRule[] | null, 
 export const actionManager = {
     async load_actions() {
         await Promise.all([
-            import('./user/注册.js'),
-            import('./user/签到.js'),
-            import('./user/信息.js'),
+            import('./system/菜单.js'),
+
             import('./user/休息.js'),
+            import('./user/信息.js'),
+            import('./user/商店.js'),
+            import('./user/注册.js'),
+            import('./user/物品.js'),
+            import('./user/签到.js'),
+            import('./user/背包.js'),
         ])
     },
 

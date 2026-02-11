@@ -20,15 +20,42 @@ function isMongoAtomicValue(value: any): boolean {
 /**
  * 创建一个可被监听的 MongoDB 对象
  * @param initialData 初始数据
- * @param updateCallback 实际执行 MongoDB 更新的回调函数
+ * @param updateCallback 实际执行 MongoDB 更新的回调函数（接收完整的 update 文档，如 { $set, $unset }）
  */
 export function createMongoObservable<T extends object>(
   initialData: T,
   updateCallback: (updateDoc: Record<string, any>) => Promise<void>
 ): T & MongoDocument {
   
-  // 存储被修改的路径集合 (使用 Set 自动去重)
+  // 存储被修改和被删除的路径集合 (使用 Set 自动去重)
   const modifiedPaths = new Set<string>();
+  const deletedPaths = new Set<string>();
+
+  // 移除与当前路径相关的（自身、父级或子级）路径，避免产生冲突
+  function removeRelatedPaths(pathSet: Set<string>, basePath: string) {
+    const toDelete: string[] = [];
+    pathSet.forEach((p) => {
+      if (
+        p === basePath ||
+        p.startsWith(basePath + '.') ||
+        basePath.startsWith(p + '.')
+      ) {
+        toDelete.push(p);
+      }
+    });
+    toDelete.forEach((p) => pathSet.delete(p));
+  }
+
+  // 过滤掉有子路径的父路径，避免 MongoDB 更新冲突
+  function filterRedundantPaths(paths: Set<string>): string[] {
+    const pathsArray = Array.from(paths);
+    return pathsArray.filter((path) => {
+      return !pathsArray.some((otherPath) => {
+        // 如果 otherPath 是 path 的子路径（例如 path='status', otherPath='status.签到'）
+        return otherPath !== path && otherPath.startsWith(path + '.');
+      });
+    });
+  }
 
   // 内部辅助函数：构建递归 Proxy
   function createProxy(target: any, pathPrefix: string = ''): any {
@@ -38,23 +65,46 @@ export function createMongoObservable<T extends object>(
         // 1. 如果调用的是 $save 方法
         if (prop === '$save') {
           return async () => {
-            if (modifiedPaths.size === 0) return;
+            if (modifiedPaths.size === 0 && deletedPaths.size === 0) return;
 
-            // 构建 MongoDB 的 $set 对象
+            const setDoc: Record<string, any> = {};
+            const unsetDoc: Record<string, any> = {};
             const updateDoc: Record<string, any> = {};
-            
-            // 遍历所有修改过的路径，从根对象获取最新值
-            modifiedPaths.forEach((path) => {
-              // 获取该路径对应的当前最新值
+
+            const filteredSetPaths = filterRedundantPaths(modifiedPaths);
+            const filteredUnsetPaths = filterRedundantPaths(deletedPaths);
+
+            // 遍历过滤后的路径，从根对象获取最新值，构建 $set
+            filteredSetPaths.forEach((path) => {
               const value = getValueByPath(initialData, path);
-              updateDoc[path] = value;
+              setDoc[path] = value;
             });
+
+            // 构建 $unset
+            filteredUnsetPaths.forEach((path) => {
+              unsetDoc[path] = true;
+            });
+
+            if (Object.keys(setDoc).length > 0) {
+              updateDoc['$set'] = setDoc;
+            }
+            if (Object.keys(unsetDoc).length > 0) {
+              updateDoc['$unset'] = unsetDoc;
+            }
+
+            // 没有有效更新，直接返回
+            if (Object.keys(updateDoc).length === 0) {
+              modifiedPaths.clear();
+              deletedPaths.clear();
+              return;
+            }
 
             // 调用外部传入的更新逻辑
             await updateCallback(updateDoc);
             
             // 清空脏路径，重置状态
             modifiedPaths.clear();
+            deletedPaths.clear();
           };
         }
 
@@ -82,9 +132,23 @@ export function createMongoObservable<T extends object>(
         // 计算当前修改的完整路径
         const currentPath = pathPrefix ? `${pathPrefix}.${String(prop)}` : String(prop);
         
-        // 记录修改路径
+        // 该路径被重新赋值，移除与之相关的删除记录，并记录修改
+        removeRelatedPaths(deletedPaths, currentPath);
         modifiedPaths.add(currentPath);
         
+        return result;
+      },
+
+      // 拦截删除操作（delete obj.prop）
+      deleteProperty(obj, prop: string | symbol) {
+        const result = Reflect.deleteProperty(obj, prop);
+
+        const currentPath = pathPrefix ? `${pathPrefix}.${String(prop)}` : String(prop);
+
+        // 删除优先，移除与之相关的修改记录，并记录删除路径
+        removeRelatedPaths(modifiedPaths, currentPath);
+        deletedPaths.add(currentPath);
+
         return result;
       }
     });

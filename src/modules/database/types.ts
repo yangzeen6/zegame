@@ -17,10 +17,10 @@ export interface UserSchema {
     weapon?: any;
     armor?: any;
   };
-  backpack?: {
+  backpack: {
     [key: string]: number;
   };
-  status?: {
+  status: {
     [key: string]: any;
   };
   [key: string]: any;
