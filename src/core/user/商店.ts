@@ -6,6 +6,8 @@ import { pages } from "@/utils/page.js";
 // 这个其实也可以储存在json中
 const shop = {
     '小钱袋': {'coins': 10},
+    '改名卡': {'coins': 100},  // 玩家名称不能重复，宠物名称可以重复
+    '宠物改名卡': {'coins': 35},
     '宝石样本': {'gems': 1}
 } as {[key: string]: any}
 

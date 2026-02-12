@@ -8,8 +8,9 @@ add_action('签到', Rule.is_registered, async (user, args) => {
     if (!pre || pre < now && pre.getDate() != now.getDate()) {
         user.setStatus('签到', now)
         user.d.coins += 10;
-        user.d.exp += 20;
-        user.send(`签到成功！恭喜获得10枚金币以及20点经验值`, {info: Info.信息});
+        user.d.exp += 10;
+        user.recoverSTA(65535);
+        user.send(`签到成功！恭喜获得10枚金币以及10点经验值。体力已全部恢复！`, {info: Info.信息});
         await user.levelUP();
         return;
     } else {

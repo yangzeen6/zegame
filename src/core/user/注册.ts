@@ -25,6 +25,11 @@ add_action('注册', null, async (user, args) => {
         return;
     }
 
+    if (await UserService.checkName(name)) {
+        user.send(`注册失败！角色名【${name}】已存在，换个名字吧！`, {info:  Info.注册});
+        return;
+    }
+
     await UserService.createUser(user.id, name);
 
     user.send(`恭喜【${name}】注册成功！`, {info:  Info.菜单});

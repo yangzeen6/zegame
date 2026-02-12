@@ -26,6 +26,31 @@ export const UserService = {
         return;
     },
 
+    async checkName(name: string): Promise<boolean> {
+        // true为name已存在, false为name不存在
+        return (await getDatabase().User.findByName(name)) != null
+    },
+
+    async checkId(id: string): Promise<boolean> {
+        // true为存在, false为不存在
+        return (await getDatabase().User.find(id)) != null
+    },
+
+    async getUserTo(session: ZeSessionBase, id: string): Promise<User> {
+        return await this.getUser({
+            event: {
+                type: session.event.type,
+                sender_id: id,
+                group_id: session.event.group_id,
+                content: session.event.content,
+                timestamp: session.event.timestamp
+            },
+            send: session.send,
+            finish: session.finish,
+            input: session.input
+        })
+    },
+
     // 在最开始处建立一个users对象池，先把所有的数据查询到，这样就不需要再require了
     async getUser(session: ZeSessionBase): Promise<User> {
         if (users.has(session.event.sender_id)) return users.get(session.event.sender_id)?.refreshSession(session) as User;
@@ -55,7 +80,7 @@ type SendConfig = {
 
 export class User {
     id: string;
-    private s: ZeSessionBase;  // session
+    s: ZeSessionBase;  // session
     d: UserSchema;  // data
     // [key: string]: any;  // 临时内存储值
 
@@ -132,7 +157,7 @@ export class User {
     // 查询升级所需经验
     expNext() {
         const L = this.d.level;
-        return L * 100;
+        return L * 100 + L * L * 10 + L * L * L;
     }
 
 }

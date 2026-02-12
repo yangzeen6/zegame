@@ -1,9 +1,9 @@
 
 import { getDatabase } from "@/database/index.js";
 import { getWebSocketServer } from "@/adapters/index.js";
-import { actionManager } from "src/core/action.js";
-import { admin_action } from "src/core/admin.js";
-import { UserService } from "src/core/user.js";
+import { actionManager } from "./action.js";
+import { admin_action } from "./admin.js";
+import { UserService } from "./user.js";
 
 const block_list: {
     [user_id: string]: boolean
@@ -26,7 +26,7 @@ export async function launch(admin: string) {
 
         // 若是群聊消息则判断群聊是否开启游戏
         if (session.event.group_id && 
-            !(await db.Config.group_list_check(session.event.group_id)))
+            !(await db.Config.checkGroupList(session.event.group_id)))
             return;
         
         // 匹配action

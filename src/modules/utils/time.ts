@@ -19,3 +19,7 @@ export function get_intervals(timestampInterval: number) {
         return `${hours}时${minutes}分`;
     }
 }
+
+export const sleep = (ms: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+};
