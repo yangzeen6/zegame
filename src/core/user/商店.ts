@@ -29,7 +29,7 @@ add_action('商店', Rule.is_registered, async (user, args) => {
 
     const s = pages(shop, page, 7, (k,v)=>` > ${k} : ${getPrice(k)}`)
 
-    user.send(`欢迎来到小卖铺\n${s}\n您的金币：${user.d.coins} 宝石：${user.d.gems}`, {info: Info.购买});
+    user.send(`尊敬的${user.d.name}，欢迎来到小卖铺\n${s}\n您的金币：${user.d.coins} 宝石：${user.d.gems}`, {info: Info.购买});
 
 })
 

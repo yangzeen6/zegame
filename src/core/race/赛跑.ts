@@ -8,6 +8,7 @@ import { Pet, getRandPet, petExpNext } from "./宠物.js";
 import { sleep } from "@/utils/time.js";
 import { randint, weightedIndex } from "@/utils/random.js";
 import { ZeRule } from "../types.js";
+import { unstableSort } from "@/utils/sort.js";
 
 const Config = getDatabase().Config
 const races: Map<string, Race> = new Map();
@@ -40,6 +41,7 @@ class Race {
     s: ZeSessionBase;
     group: string;
     host: string;
+    is_started: boolean = false;
     players: Player[] = [];
     winners: Player[] = [];
 
@@ -49,17 +51,9 @@ class Race {
         this.host = s.event.sender_id;
     }
 
-    getFirstPetPlayer() {
-        var index = 0;
-        for (var i=0;i<this.players.length;i++) {
-            if (this.players[i].distance == this.players[index].distance && randint(1,2)==1) {
-                index = i;
-            }
-            else if (this.players[i].distance < this.players[index].distance) {
-                index = i;
-            }
-        }
-        return this.players[index]
+    // distance越小，下标越小
+    getPlayerByDistance(): Player[] {
+        return unstableSort<Player>(this.players, (a,b)=>a.distance-b.distance);
     }
 
     getPlayer(user_id: string) {
@@ -111,7 +105,9 @@ class Race {
                     p.buff = 3;
                     p.pet.suffix = '💨'
                 } else if (p.buff == 3){
-                    if (p.distance - this.getFirstPetPlayer().distance < 5) {
+                    var d = p.distance - this.getPlayerByDistance()[1].distance
+                    //  为超前第二名5点且距离终点只剩不到20点 或 超前第二名8点
+                    if ((p.distance <= 20 && d <= -5) || d<=-8) {
                         p.buff = 0;
                         delete p.pet.suffix;
                     }
@@ -178,7 +174,8 @@ class Race {
                     w.pet.level++;
                     msg+=`（升级啦！${w.pet.level-1}->${w.pet.level}级）`
                 }
-                msg+='\n'
+                msg+='\n'; 
+                w.user.update();
             }
         }
         this.s.send(msg.trim(), false)
@@ -186,6 +183,7 @@ class Race {
 
     async checkStart() {
         if (this.players.length == 5) {
+            this.is_started = true;
             await sleep(1000);
             await this.s.send(`宠物赛跑正式开始！\n${this.players.map((p: Player) => `${p.index + 1}号【${p.pet.emoji}${p.pet.name}${p.bot?'':`@${p.user.d.name}`}】`).join('\n')}`, false)
             await sleep(1000);
@@ -226,7 +224,7 @@ add_action('香蕉皮', [Rule.is_registered, Rule.is_wake, is_racing], async (us
     user.incItem('香蕉皮', -1);
 
     if (randint(1,100) <= 70) {
-        const p = race.getFirstPetPlayer();
+        const p = race.getPlayerByDistance()[0];
         p.pet.suffix = '🍌';
         p.buff = 1;
         user.send(`使用成功！香蕉皮扔中了${p.index+1}号【${p.pet.emoji}${p.pet.name}】`);
@@ -253,7 +251,6 @@ add_action('饮料', [Rule.is_registered, Rule.is_wake, is_racing], async (user,
     p.buff = 2;
     user.send(`使用成功！${p.index+1}号【${p.pet.emoji}${p.pet.name}】喝了饮料！`);
     
-
 })
 
 
@@ -269,17 +266,23 @@ add_action('赛跑', [Rule.is_registered, Rule.is_wake], async (user, args) => {
         user.send(`你还没有宠物哦~ 发送“领养”来获得一只宠物吧！`)
         return;
     }
-
-    if (races.get(group)) {
-        user.send(`当前群聊正在进行一场宠物赛跑哦~ 请等待本场比赛结束再开始下一场吧！或者也可以在其他群聊中新开一场哦~`)
+    const r = races.get(group)
+    if (r) {
+        if (r.is_started) {
+            user.send(`当前群聊的宠物赛跑已经开始了哦~ 请等待本场比赛结束再开始下一场吧！或者也可以在其他群聊中新开一场哦~`)
+        } else {
+            user.send(`当前群聊正在进行一场宠物赛跑哦~ 发送“加入”即可选择宠物参加比赛`)
+        }
+        
         return;
     }
 
     const race = new Race(user.s);
+    races.set(group, race);
     if(await race.addPlayer(user)) {
-        races.set(group, race);
-        user.send(`成功在当前群聊发起一场宠物赛跑！满5人赛跑自动开始，等待群友加入中...
-提示：各位群友可发送“加入”来选择宠物参加本场宠物赛跑。若没有群友在线，你也可以发送“添加人机”来补足空位开始游戏。\n当前人数：1/5`)
+        await user.send(`成功在当前群聊发起一场宠物赛跑！满5人赛跑自动开始，等待群友加入中...
+提示：各位群友可发送“加入”来选择宠物参加本场宠物赛跑。若没有群友在线，你也可以发送“添加人机”来补足空位开始游戏。\n当前人数：${race.players.length}/5`)
+        race.checkStart();
     }
 })
 
