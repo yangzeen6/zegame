@@ -74,6 +74,10 @@ class Race {
             }
             break;
         }
+        if (this.players.length >= 5) {
+            user.send(`加入失败！当前群聊正在进行一场宠物赛跑哦~ 请等待本场比赛结束再开始下一场吧！或者也可以在其他群聊中新开一场哦~`)
+            return false;
+        }
         this.players.push(new Player(user, pets[r-1], false, this.players.length));
         return true
     }

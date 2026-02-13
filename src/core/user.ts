@@ -151,7 +151,7 @@ export class User {
     }
 
     async update() {
-        await this.d.$save();
+        if (this.d?.$save) await this.d.$save();
     }
 
     // 查询升级所需经验
