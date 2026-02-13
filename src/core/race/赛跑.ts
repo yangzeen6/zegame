@@ -229,7 +229,7 @@ add_action('香蕉皮', [Rule.is_registered, Rule.is_wake, is_racing], async (us
         p.buff = 1;
         user.send(`使用成功！香蕉皮扔中了${p.index+1}号【${p.pet.emoji}${p.pet.name}】`);
     } else {
-        user.send(`使用失败！香蕉皮没扔中哦~`)
+        user.send(`使用成功！但是香蕉皮没扔中哦~`)
     }
     
 })
@@ -250,7 +250,7 @@ add_action('饮料', [Rule.is_registered, Rule.is_wake, is_racing], async (user,
     p.pet.suffix = '🥤'
     p.buff = 2;
     user.send(`使用成功！${p.index+1}号【${p.pet.emoji}${p.pet.name}】喝了饮料！`);
-    
+
 })
 
 
