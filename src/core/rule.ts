@@ -15,11 +15,13 @@ const is_wake: ZeRule = async (user) => {
     if (time) {
         const span = Date.now() - (time as Date).getTime()
         const intervals = get_intervals(span)
-        await user.send(`操作失败！【${user?.d.name}】正在休息中...\n你已经休息了${intervals}，请先【停止休息】`, {info:Info.停止休息} )
+        await user.send(`操作失败！【${user?.d.name}】正在休息中...\n你已经休息了${intervals}，请先发送“停止休息”`)
         return false;
     }
     return true;
 }
+
+
 
 export const Rule = {
     is_registered,

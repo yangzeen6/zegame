@@ -8,7 +8,9 @@ const shop = {
     '小钱袋': {'coins': 10},
     '改名卡': {'coins': 100},  // 玩家名称不能重复，宠物名称可以重复
     '宠物改名卡': {'coins': 35},
-    '宝石样本': {'gems': 1}
+    '宝石样本': {'gems': 1},
+    '香蕉皮': {'coins': 5},
+    '饮料': {'coins': 10},
 } as {[key: string]: any}
 
 function getPrice(item: string): string {

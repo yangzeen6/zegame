@@ -117,6 +117,7 @@ export class User {
         } else {
             if (!count || count + inc < 0) return false;
             if (count + inc == 0) delete this.d.backpack[item];
+            else this.d.backpack[item] += inc;
         }
         return true;
     }

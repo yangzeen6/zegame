@@ -16,8 +16,9 @@ export function add_action(action_name: string, rule: ZeRule | ZeRule[] | null, 
 export const actionManager = {
     async load_actions() {
         await Promise.all([
+            import('./race/宠物.js'),
             import('./race/赛跑.js'),
-
+            
             import('./system/菜单.js'),
 
             import('./user/休息.js'),
@@ -27,6 +28,7 @@ export const actionManager = {
             import('./user/物品.js'),
             import('./user/签到.js'),
             import('./user/背包.js'),
+            import('./user/赠送.js'),
         ])
     },
 

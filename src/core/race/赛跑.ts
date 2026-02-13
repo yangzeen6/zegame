@@ -7,6 +7,7 @@ import { getDatabase } from "@/database/index.js";
 import { Pet, getRandPet, petExpNext } from "./宠物.js";
 import { sleep } from "@/utils/time.js";
 import { randint, weightedIndex } from "@/utils/random.js";
+import { ZeRule } from "../types.js";
 
 const Config = getDatabase().Config
 const races: Map<string, Race> = new Map();
@@ -17,6 +18,7 @@ class Player {
     pet: Pet;
     bot: boolean;
     distance = 40;
+    buff = 0;
     constructor(user: User, pet: Pet, bot: boolean, index: number) {
         this.user = user;
         this.pet = pet
@@ -28,6 +30,8 @@ class Player {
         if (this.pet.suffix) {
             if (this.pet.suffix == '💨') return '冲刺了！'
             if (this.pet.suffix == '💦') return '累了...'
+            if (this.pet.suffix == '🍌') return '踩香蕉皮滑倒啦...'
+            if (this.pet.suffix == '🥤') return '喝饮料后感觉很有动力！'
         }
     }
 }
@@ -43,6 +47,19 @@ class Race {
         this.s = s;
         this.group = s.event.group_id;
         this.host = s.event.sender_id;
+    }
+
+    getFirstPetPlayer() {
+        var index = 0;
+        for (var i=0;i<this.players.length;i++) {
+            if (this.players[i].distance == this.players[index].distance && randint(1,2)==1) {
+                index = i;
+            }
+            else if (this.players[i].distance < this.players[index].distance) {
+                index = i;
+            }
+        }
+        return this.players[index]
     }
 
     getPlayer(user_id: string) {
@@ -86,8 +103,21 @@ class Race {
         var s = this.players.map(p => p.distance <0 ? `${p.pet.emoji}${p.pet.suffix || ''}` : `|${' '.repeat(p.distance)}${p.pet.emoji}${p.pet.suffix || ''}`).join('\n');
         for (var p of this.players) {
             if (p.pet.suffix) {
-                s+=`\n${p.index + 1}号${p.pet.emoji}${p.pet.name}${p.getSuffixText()}`
-                p.pet.suffix = undefined;
+                s+=`\n${p.index + 1}号【${p.pet.emoji}${p.pet.name}】${p.getSuffixText()}`
+                if (p.buff == 1) {
+                    p.buff = 0;
+                    p.pet.suffix = '💦'
+                } else if (p.buff == 2){
+                    p.buff = 3;
+                    p.pet.suffix = '💨'
+                } else if (p.buff == 3){
+                    if (p.distance - this.getFirstPetPlayer().distance < 5) {
+                        p.buff = 0;
+                        delete p.pet.suffix;
+                    }
+                } else {
+                    delete p.pet.suffix;
+                }
             }
         }
         return s;
@@ -95,19 +125,24 @@ class Race {
 
     calc() {
         for(var p of this.players) {
-            // TODO: 找几个算概率的工具函数
-            var r = weightedIndex([70,15,15])
-
-            if (r == 0) {
-                p.distance -= randint(1,3);
-            } else if (r == 1) {
-                p.pet.suffix = '💨'
-                p.distance -= randint(4,5);
+            if (!p.pet.suffix) {
+                var r = weightedIndex([70,15,15])
+                if (r == 0) {
+                    p.distance -= randint(1,3);
+                } else if (r == 1) {
+                    p.pet.suffix = '💨'
+                    p.distance -= randint(4,5);
+                } else {
+                    p.pet.suffix = '💦'
+                    // distance -= 0
+                }
             } else {
-                p.pet.suffix = '💦'
-                p.distance -= 0;
+                if (p.buff == 2) {
+                    p.distance -= 4
+                } else if (p.buff == 3) {
+                    p.distance -= randint(4,5);
+                }
             }
-            
             if (p.distance<=0) {
                 p.distance = -1;
                 for (var w of this.winners) {
@@ -127,18 +162,18 @@ class Race {
             await this.s.send(this.display(), false);
             if (this.winners.length>0) break;
         }
+        races.delete(this.group);
         await sleep(1000);
         await this.s.send(`恭喜${this.winners.map((p: Player) => `${p.index + 1}号【${p.pet.emoji}${p.pet.name}${p.bot?'':`@${p.user.d.name}`}】`).join('，')}${this.winners.length > 1 ? '并列': ''}取得宠物赛跑冠军🏆！`, false)
         var msg = ''
-        races.delete(this.group);
         await sleep(1000);
         for (var w of this.winners) {
             if (!w.bot) {
-                var coins = randint(10,15);
+                var coins = randint(15,20);
                 var exp = randint(10,15);
                 w.user.d.coins+= coins;
                 w.pet.exp += exp;
-                msg += `@${w.user.d.name} 获得了${coins}枚金币，其宠物${w.pet.emoji}${w.pet.name} 获得了${exp}点经验值`
+                msg += `@${w.user.d.name} 获得了${coins}枚金币，其宠物【${w.pet.emoji}${w.pet.name}】获得了${exp}点经验值`
                 if (w.pet.exp >= petExpNext(w.pet.level)) {
                     w.pet.level++;
                     msg+=`（升级啦！${w.pet.level-1}->${w.pet.level}级）`
@@ -160,6 +195,66 @@ class Race {
 
     
 }
+
+const is_racing: ZeRule = async (user) => {
+    const group = user.s.event.group_id;
+    if (!group) {
+        return false;
+    }
+
+    const pets = user.d.pets  // underfined || Pet[]
+    if (!pets || pets.length==0) {
+        user.send(`你还没有宠物哦~ 发送“领养”来获得一只宠物吧！`)
+        return false;
+    }
+
+    const race = races.get(group)
+    if (!race) {
+        user.send(`当前群聊未进行宠物赛跑哦~ 请发送“赛跑”来开启一场新的比赛！`)
+        return false;
+    }
+    return true
+}
+
+add_action('香蕉皮', [Rule.is_registered, Rule.is_wake, is_racing], async (user, args) => {
+    const race = races.get(user.s.event.group_id) as Race
+    
+    if (!(user.d.backpack['香蕉皮']>=1)) {
+        user.send(`你没有名为“香蕉皮”的物品`, {info: Info.商店});
+        return;
+    }
+    user.incItem('香蕉皮', -1);
+
+    if (randint(1,100) <= 70) {
+        const p = race.getFirstPetPlayer();
+        p.pet.suffix = '🍌';
+        p.buff = 1;
+        user.send(`使用成功！香蕉皮扔中了${p.index+1}号【${p.pet.emoji}${p.pet.name}】`);
+    } else {
+        user.send(`使用失败！香蕉皮没扔中哦~`)
+    }
+    
+})
+
+add_action('饮料', [Rule.is_registered, Rule.is_wake, is_racing], async (user, args) => {
+    const race = races.get(user.s.event.group_id) as Race
+    const p = race.getPlayer(user.id)
+    if (!p) {
+        user.send(`你没有参加宠物赛跑哦~，请等待本场比赛结束再开始下一场吧！或者也可以在其他群聊中新开一场哦~`)
+        return;
+    }
+    if (!(user.d.backpack['饮料']>=1)) {
+        user.send(`你没有名为“饮料”的物品`, {info: Info.商店});
+        return;
+    }
+    user.incItem('饮料', -1);
+
+    p.pet.suffix = '🥤'
+    p.buff = 2;
+    user.send(`使用成功！${p.index+1}号【${p.pet.emoji}${p.pet.name}】喝了饮料！`);
+    
+
+})
 
 
 add_action('赛跑', [Rule.is_registered, Rule.is_wake], async (user, args) => {

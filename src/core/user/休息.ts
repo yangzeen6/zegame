@@ -11,7 +11,7 @@ add_action('休息', [Rule.is_registered, Rule.is_wake], async (user, args) => {
 10s~30s：3~5点生命值，6~10点体力值（恢复最快）
 30s~1小时：5~39点生命值，10~42点体力值（恢复较慢）
 1小时以上：每小时恢复10点生命值，10点体力值（恢复最慢）
-发送停止休息才会刷新状态`, {info: Info.停止休息});
+发送“停止休息”才会刷新状态`);
     user.setStatus('休息', new Date());
 })
 

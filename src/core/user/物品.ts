@@ -128,6 +128,6 @@ add_action('使用', [Rule.is_registered, Rule.is_wake], async (user, args) => {
     if (using) { 
         using(user, item)
     } else {
-        user.send(`该物品无法使用！`)
+        user.send(`该物品无法直接使用哦！请发送“查询 ${item}”获取详细信息`)
     }
 })

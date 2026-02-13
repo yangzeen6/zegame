@@ -3,11 +3,20 @@ import { Rule } from "../rule.js";
 import { Info } from "../info.js";
 
 add_action('菜单', Rule.is_registered, async (user, args) => {
-    const menu = ['签到', '信息', '背包', '商店', '休息', '使用', '宠物', '赛跑']
-    const info = menu.map(key => `${key}: ${Info[key]}`);
     let msg = "【菜单】\n";
-    for (const line of info) {
-        msg += line + "\n";
+    var i = 0;
+    for (var key in Info) {
+        i++;
+        msg += key + (i%2==0 ? "\n" : ' ');
     }
-    user.send(msg.trim());
+    user.send(msg.trim(), {info: "发送“帮助 <指令名称>”即可查看具体的指令介绍"});
+})
+
+add_action('帮助', Rule.is_registered, async (user, args) => {
+    const s = args[0] || '';
+    if (!Info[s]) {
+        user.send(`指令【${s}】不存在`);
+        return;
+    }
+    user.send(`${s}: ${Info[s]}`);
 })
